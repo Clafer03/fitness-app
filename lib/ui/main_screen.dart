@@ -1,3 +1,5 @@
+import 'package:fitness_app/core/database/tables/routine_table.dart';
+import 'package:fitness_app/services/routine_service.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'home_page.dart'; // Tu dashboard actual
@@ -8,8 +10,9 @@ import '../services/training_service.dart'; // Importa esto
 class MainScreen extends StatefulWidget {
   final DashboardService dashboardService;
   final TrainingService trainingService;
+  final RoutineService routineService;
 
-  const MainScreen({super.key, required this.dashboardService, required this.trainingService});
+  const MainScreen({super.key, required this.dashboardService, required this.trainingService, required this.routineService});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -28,7 +31,7 @@ class _MainScreenState extends State<MainScreen> {
       
       // Index 1: Entrenar
       // Le pasamos el servicio de entreno para que pueda cargar rutinas
-      WorkoutPage(trainingService: widget.trainingService), 
+      WorkoutPage(routineService: widget.routineService), 
       
       // Index 2: Perfil
       const Center(child: Text("Perfil (Próximamente)", style: TextStyle(color: Colors.white))),

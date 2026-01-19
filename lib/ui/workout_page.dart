@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'create_routine_page.dart'; // La nueva página que crearemos abajo
 import '../services/training_service.dart'; // Importa esto
-
+import '../services/routine_service.dart';
+import '../core/database/app_database.dart'; 
 
 class WorkoutPage extends StatelessWidget {
-  final TrainingService trainingService; // Recibimos el servicio
+  //final TrainingService trainingService; // Recibimos el servicio
+  final RoutineService routineService;
 
-  const WorkoutPage({super.key, required this.trainingService});
+  const WorkoutPage({super.key, required this.routineService});
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +28,49 @@ class WorkoutPage extends StatelessWidget {
           // Navegamos a la pantalla de CREACIÓN
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CreateRoutinePage()),
+            MaterialPageRoute(
+              // ERROR 2: Asegúrate que CreateRoutinePage acepte routineService (ver abajo)
+              builder: (context) => CreateRoutinePage(routineService: routineService),
+            ),
           );
         },
       ),
       // --------------------------
 
-      body: _EmptyState(), 
-      //    rutinas.isEmpty  ? _EmptyState() // Si no hay rutinas, mostramos un diseño bonito
-      //     : ListView.builder(
-      //         // ... tu lista de rutinas existente ...
-      //       ),
+      body: StreamBuilder<List<RoutineData>>( // <--- Usamos RoutineData
+        stream: routineService.watchRutinas(), // <--- Usamos routineService
+        builder: (context, snapshot) {
+           if (snapshot.connectionState == ConnectionState.waiting) {
+             return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (snapshot.hasError) {
+             return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          final rutinas = snapshot.data ?? [];
+
+          if (rutinas.isEmpty) {
+             return _EmptyState();
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: rutinas.length,
+            itemBuilder: (context, index) {
+              final rutina = rutinas[index];
+              return Card(
+                color: const Color(0xFF1F2937),
+                child: ListTile(
+                  title: Text(rutina.routineName, style: const TextStyle(color: Colors.white)), // Usa routineName (inglés)
+                  subtitle: Text(rutina.dayWeek, style: const TextStyle(color: Colors.grey)),
+                  trailing: const Icon(Icons.chevron_right, color: AppColors.orange),
+                ),
+              );
+            },
+          );
+        }
+      ),
     );
   }
 }

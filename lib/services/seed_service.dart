@@ -30,16 +30,45 @@ class SeedService {
 
     await db.batch((batch) {
       batch.insertAll(db.exercise, [
-        ExerciseCompanion.insert(
-            exerciseName: 'Press Banca', muscularGroup: 'Pecho'),
-        ExerciseCompanion.insert(
-            exerciseName: 'Sentadilla', muscularGroup: 'Piernas'),
-        ExerciseCompanion.insert(
-            exerciseName: 'Remo', muscularGroup: 'Espalda'),
-        ExerciseCompanion.insert(
-            exerciseName: 'Press Militar', muscularGroup: 'Hombros'),
-        ExerciseCompanion.insert(
-            exerciseName: 'Curl Bíceps', muscularGroup: 'Brazos'),
+        // --- PECHO ---
+        ExerciseCompanion.insert(exerciseName: 'Press de Banca Plano', muscularGroup: 'Pecho'),
+        ExerciseCompanion.insert(exerciseName: 'Press de Banca Inclinado', muscularGroup: 'Pecho'),
+        ExerciseCompanion.insert(exerciseName: 'Aperturas con Mancuernas', muscularGroup: 'Pecho'),
+        ExerciseCompanion.insert(exerciseName: 'Flexiones (Push-ups)', muscularGroup: 'Pecho'),
+        ExerciseCompanion.insert(exerciseName: 'Cruce de Poleas', muscularGroup: 'Pecho'),
+
+        // --- ESPALDA ---
+        ExerciseCompanion.insert(exerciseName: 'Dominadas', muscularGroup: 'Espalda'),
+        ExerciseCompanion.insert(exerciseName: 'Jalón al Pecho', muscularGroup: 'Espalda'),
+        ExerciseCompanion.insert(exerciseName: 'Remo con Barra', muscularGroup: 'Espalda'),
+        ExerciseCompanion.insert(exerciseName: 'Remo con Mancuerna', muscularGroup: 'Espalda'),
+        ExerciseCompanion.insert(exerciseName: 'Peso Muerto', muscularGroup: 'Espalda'),
+
+        // --- PIERNAS ---
+        ExerciseCompanion.insert(exerciseName: 'Sentadilla Libre', muscularGroup: 'Piernas'),
+        ExerciseCompanion.insert(exerciseName: 'Prensa de Piernas', muscularGroup: 'Piernas'),
+        ExerciseCompanion.insert(exerciseName: 'Zancadas (Lunges)', muscularGroup: 'Piernas'),
+        ExerciseCompanion.insert(exerciseName: 'Extensiones de Cuádriceps', muscularGroup: 'Piernas'),
+        ExerciseCompanion.insert(exerciseName: 'Curl Femoral', muscularGroup: 'Piernas'),
+        ExerciseCompanion.insert(exerciseName: 'Elevación de Talones', muscularGroup: 'Piernas'),
+
+        // --- HOMBROS ---
+        ExerciseCompanion.insert(exerciseName: 'Press Militar', muscularGroup: 'Hombros'),
+        ExerciseCompanion.insert(exerciseName: 'Elevaciones Laterales', muscularGroup: 'Hombros'),
+        ExerciseCompanion.insert(exerciseName: 'Pájaros (Posterior)', muscularGroup: 'Hombros'),
+        ExerciseCompanion.insert(exerciseName: 'Remo al Mentón', muscularGroup: 'Hombros'),
+
+        // --- BRAZOS ---
+        ExerciseCompanion.insert(exerciseName: 'Curl de Bíceps con Barra', muscularGroup: 'Brazos'),
+        ExerciseCompanion.insert(exerciseName: 'Curl Martillo', muscularGroup: 'Brazos'),
+        ExerciseCompanion.insert(exerciseName: 'Fondos en Paralelas', muscularGroup: 'Brazos'),
+        ExerciseCompanion.insert(exerciseName: 'Extensiones de Tríceps', muscularGroup: 'Brazos'),
+        ExerciseCompanion.insert(exerciseName: 'Press Francés', muscularGroup: 'Brazos'),
+
+        // --- CORE / ABDOMINALES ---
+        ExerciseCompanion.insert(exerciseName: 'Plancha (Plank)', muscularGroup: 'Abdominales'),
+        ExerciseCompanion.insert(exerciseName: 'Crunch Abdominal', muscularGroup: 'Abdominales'),
+        ExerciseCompanion.insert(exerciseName: 'Elevación de Piernas', muscularGroup: 'Abdominales'),
       ]);
     });
   }

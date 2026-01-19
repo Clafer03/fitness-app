@@ -42,6 +42,7 @@
 //     );
 //   }
 // }
+import 'package:fitness_app/services/routine_service.dart';
 import 'package:fitness_app/ui/home_page.dart';
 import 'package:fitness_app/ui/main_screen.dart';
 import 'package:flutter/material.dart';
@@ -60,13 +61,15 @@ void main() async {
   final trainingService = TrainingService(database);
   final dashboardService = DashboardService(database);
   final seedService = SeedService(database);
+  final routineService = RoutineService(database);
 
   await seedService.seed();
 
   runApp(MyApp(
     database: database,
     trainingService:trainingService,
-    dashboardService:dashboardService
+    dashboardService:dashboardService,
+    routineService: routineService,
     )
   );
 }
@@ -75,12 +78,14 @@ class MyApp extends StatelessWidget {
   final AppDatabase database;
   final TrainingService trainingService;
   final DashboardService dashboardService;
+  final RoutineService routineService;
 
   const MyApp({
     super.key,
     required this.database,
     required this.trainingService,
-    required this.dashboardService
+    required this.dashboardService,
+    required this.routineService
   });
 
   @override
@@ -88,7 +93,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: AppTheme.darkTheme,
       title: 'Fitness App',
-      home: MainScreen(dashboardService: dashboardService, trainingService: trainingService )//HomePage(dashboardService: dashboardService)//DebugTablePage(db: database),
+      home: MainScreen(dashboardService: dashboardService, trainingService: trainingService, routineService: routineService )//HomePage(dashboardService: dashboardService)//DebugTablePage(db: database),
     );
   }
 }
