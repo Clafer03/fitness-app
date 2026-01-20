@@ -1,18 +1,24 @@
-import 'package:fitness_app/core/database/tables/routine_table.dart';
-import 'package:fitness_app/services/routine_service.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import 'home_page.dart'; // Tu dashboard actual
-import 'workout_page.dart'; // La nueva que crearemos
+// IMPORTS DE TUS PÁGINAS
+import 'home_page.dart'; 
+import 'workout_page.dart';
+import 'history_page.dart'; // <--- IMPORTA LA NUEVA PÁGINA AQUÍ
 import '../services/dashboard_service.dart';
-import '../services/training_service.dart'; // Importa esto
+import '../services/training_service.dart';
+import '../services/routine_service.dart';
 
 class MainScreen extends StatefulWidget {
   final DashboardService dashboardService;
   final TrainingService trainingService;
   final RoutineService routineService;
 
-  const MainScreen({super.key, required this.dashboardService, required this.trainingService, required this.routineService});
+  const MainScreen({
+    super.key, 
+    required this.dashboardService, 
+    required this.trainingService, 
+    required this.routineService
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -23,22 +29,29 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ CORRECCIÓN: Definimos la lista AQUÍ dentro para poder usar "widget."
+    // Definimos la lista de páginas en el mismo orden que los botones
     final List<Widget> pages = [
-      // Index 0: Dashboard
-      // Quitamos el 'const' porque widget.dashboardService es variable
+      // 0. PROGRESO (Dashboard)
       HomePage(dashboardService: widget.dashboardService), 
       
-      // Index 1: Entrenar
-      // Le pasamos el servicio de entreno para que pueda cargar rutinas
-      WorkoutPage(routineService: widget.routineService), 
+      // 1. ENTRENAR (WorkoutPage)
+      WorkoutPage(
+        routineService: widget.routineService, 
+        trainingService: widget.trainingService,
+      ), 
       
-      // Index 2: Perfil
+      // 2. HISTORIAL (HistoryPage) - ¡AQUÍ ESTABA EL HUECO!
+      HistoryPage(
+        trainingService: widget.trainingService,
+        routineService: widget.routineService,
+      ),
+      
+      // 3. PERFIL (Placeholder)
       const Center(child: Text("Perfil (Próximamente)", style: TextStyle(color: Colors.white))),
     ];
 
     return Scaffold(
-      // Usamos la lista local 'pages'
+      // Muestra la página según el índice seleccionado
       body: pages[_selectedIndex],
       
       bottomNavigationBar: Container(
@@ -49,6 +62,7 @@ class _MainScreenState extends State<MainScreen> {
           backgroundColor: AppColors.background,
           selectedItemColor: AppColors.orange,
           unselectedItemColor: Colors.grey,
+          type: BottomNavigationBarType.fixed, // IMPORTANTE para 4 items o más
           currentIndex: _selectedIndex,
           onTap: (index) {
             setState(() {
@@ -56,14 +70,22 @@ class _MainScreenState extends State<MainScreen> {
             });
           },
           items: const [
+            // ÍNDICE 0
             BottomNavigationBarItem(
               icon: Icon(Icons.bar_chart_rounded),
               label: 'Progreso',
             ),
+            // ÍNDICE 1
             BottomNavigationBarItem(
               icon: Icon(Icons.fitness_center_rounded),
               label: 'Entrenar',
             ),
+            // ÍNDICE 2
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              label: 'Historial',
+            ),
+            // ÍNDICE 3
             BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),
               label: 'Perfil',

@@ -193,36 +193,15 @@ class _CreateRoutinePageState extends State<CreateRoutinePage> {
   }
   // POPUP
 void _showAddExerciseDialog() {
-    // Validaciones de seguridad iniciales
-    if (_isLoadingExercises) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cargando ejercicios...")));
-      return;
-    }
-    if (_availableExercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No hay ejercicios disponibles.")));
-      return;
-    }
+    if (_isLoadingExercises || _availableExercises.isEmpty) return;
 
-    // 1. OBTENER GRUPOS MUSCULARES ÚNICOS
-    // .toSet() elimina duplicados y .toList() lo vuelve lista
-    final List<String> muscleGroups = _availableExercises
-        .map((e) => e.muscularGroup)
-        .toSet()
-        .toList();
+    // Estado inicial (Variables que persisten mientras el popup está abierto)
+    // Inicializamos con el grupo del primer ejercicio disponible
+    String selectedGroup = _availableExercises.first.muscularGroup;
     
-    // Variables iniciales del Dialog
-    String selectedGroup = muscleGroups.first; // Por defecto el primer grupo (ej: Pecho)
-    
-    // Filtramos la lista inicial basada en ese primer grupo
-    List<ExerciseData> filteredExercises = _availableExercises
-        .where((e) => e.muscularGroup == selectedGroup)
-        .toList();
-
-    // Seleccionamos el primer ejercicio de esa lista filtrada
-    int selectedExerciseId = filteredExercises.first.id;
-    String selectedExerciseName = filteredExercises.first.exerciseName;
-
-    // Variables para los inputs numéricos
+    // Variables de los inputs
+    int selectedExerciseId = -1; // -1 indica que aún no se ha calculado
+    String selectedExerciseName = "";
     int tempSets = 4;
     int tempReps = 12;
     double tempWeight = 0;
@@ -230,8 +209,37 @@ void _showAddExerciseDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // StatefulBuilder permite reconstruir el contenido del diálogo
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            
+            // 1. CALCULAR GRUPOS DENTRO DEL BUILDER (Para que se actualice al agregar uno nuevo)
+            final List<String> muscleGroups = _availableExercises
+                .map((e) => e.muscularGroup)
+                .toSet()
+                .toList();
+            muscleGroups.sort(); // Orden alfabético
+
+            // Validación de seguridad: si selectedGroup ya no existe (raro), usar el primero
+            if (!muscleGroups.contains(selectedGroup)) {
+              selectedGroup = muscleGroups.first;
+            }
+
+            // 2. FILTRAR EJERCICIOS SEGÚN EL GRUPO ACTUAL
+            List<ExerciseData> filteredExercises = _availableExercises
+                .where((e) => e.muscularGroup == selectedGroup)
+                .toList();
+
+            // 3. SELECCIONAR EJERCICIO POR DEFECTO
+            // Si el ID seleccionado no pertenece a la lista filtrada actual (o es -1),
+            // seleccionamos el primero de la nueva lista filtrada.
+            if (selectedExerciseId == -1 || !filteredExercises.any((e) => e.id == selectedExerciseId)) {
+               if (filteredExercises.isNotEmpty) {
+                 selectedExerciseId = filteredExercises.first.id;
+                 selectedExerciseName = filteredExercises.first.exerciseName;
+               }
+            }
+
             return AlertDialog(
               backgroundColor: const Color(0xFF1F2937),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -243,13 +251,13 @@ void _showAddExerciseDialog() {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     
-                    // --- LABEL 1: GRUPO MUSCULAR ---
+                    // --- GRUPO MUSCULAR ---
                     const Text("Grupo Muscular", style: TextStyle(color: Colors.grey, fontSize: 12)),
                     const SizedBox(height: 5),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.black45, // Un poco más oscuro para diferenciar
+                        color: Colors.black45,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: AppColors.orange.withOpacity(0.5)),
                       ),
@@ -260,26 +268,18 @@ void _showAddExerciseDialog() {
                           isExpanded: true,
                           icon: const Icon(Icons.filter_list, color: AppColors.orange),
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          
                           items: muscleGroups.map((String group) {
                             return DropdownMenuItem<String>(
                               value: group,
-                              child: Text(group.toUpperCase()), // En mayúsculas se ve pro
+                              child: Text(group.toUpperCase()),
                             );
                           }).toList(),
-                          
                           onChanged: (String? newGroup) {
                             if (newGroup != null) {
-                              // AQUÍ OCURRE LA MAGIA DEL FILTRO
                               setDialogState(() {
                                 selectedGroup = newGroup;
-                                // 1. Actualizamos la lista filtrada
-                                filteredExercises = _availableExercises
-                                    .where((e) => e.muscularGroup == newGroup)
-                                    .toList();
-                                // 2. Reseteamos el ejercicio seleccionado al primero de la nueva lista
-                                selectedExerciseId = filteredExercises.first.id;
-                                selectedExerciseName = filteredExercises.first.exerciseName;
+                                // Al cambiar grupo, reseteamos el ID para que la lógica de arriba seleccione el primero
+                                selectedExerciseId = -1; 
                               });
                             }
                           },
@@ -289,54 +289,39 @@ void _showAddExerciseDialog() {
 
                     const SizedBox(height: 16),
 
+                    // --- EJERCICIO + BOTÓN NUEVO ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Ejercicio", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                        
-                        // BOTÓN PARA AGREGAR NUEVO EJERCICIO
                         InkWell(
                           onTap: () async {
-                            // 1. Abrimos el formulario de creación
-                            await _showCreateExerciseDialog();
+                            // Abrimos el creador y esperamos a que nos devuelva el grupo creado
+                            final newGroupCreated = await _showCreateExerciseDialog();
                             
-                            // 2. Al volver, refrescamos el estado del Dialog Principal
-                            // para que aparezca el nuevo ejercicio en la lista
-                            setDialogState(() {
-                                // Forzamos a que se recalcule el filtro
-                                // (Si creaste un ejercicio de "Brazos" y estabas en "Pecho", 
-                                // esto asegura que no explote, o podrías cambiar selectedGroup al nuevo)
-                                filteredExercises = _availableExercises
-                                    .where((e) => e.muscularGroup == selectedGroup)
-                                    .toList();
-                                
-                                // Si justo agregaste uno de este grupo, selecciónalo
-                                if (filteredExercises.isNotEmpty) {
-                                  // Opcional: buscar el último agregado si coincide el grupo
-                                  // Por simplicidad, seleccionamos el primero o mantenemos lógica
-                                  if (!filteredExercises.any((e) => e.id == selectedExerciseId)) {
-                                      selectedExerciseId = filteredExercises.first.id;
-                                      selectedExerciseName = filteredExercises.first.exerciseName;
-                                  }
-                                }
-                            });
+                            // Si se creó algo (newGroupCreated no es null)
+                            if (newGroupCreated != null) {
+                              setDialogState(() {
+                                // 1. Cambiamos el filtro al grupo del nuevo ejercicio
+                                selectedGroup = newGroupCreated;
+                                // 2. Reseteamos el ID para que seleccione automáticamente el nuevo (que estará al principio o en la lista)
+                                // Nota: Como ordenamos alfabéticamente, lo ideal sería buscar el último agregado, 
+                                // pero seleccionar el grupo ya es una gran ayuda.
+                                selectedExerciseId = -1;
+                              });
+                            }
                           },
                           child: const Padding(
                             padding: EdgeInsets.all(4.0),
-                            child: Text(
-                              "+ Nuevo", 
-                              style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold, fontSize: 12)
-                            ),
+                            child: Text("+ Nuevo", style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ),
                       ],
                     ),
                     
                     const SizedBox(height: 5),
-
-                    // --- LABEL 2: EJERCICIO ---
-                    const Text("Ejercicio", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    const SizedBox(height: 5),
+                    
+                    // DROPDOWN EJERCICIOS
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
@@ -351,15 +336,12 @@ void _showAddExerciseDialog() {
                           isExpanded: true,
                           icon: const Icon(Icons.arrow_drop_down, color: AppColors.orange),
                           style: const TextStyle(color: Colors.white, fontSize: 16),
-                          
-                          // USAMOS LA LISTA FILTRADA AQUÍ 👇
                           items: filteredExercises.map((ExerciseData ex) {
                             return DropdownMenuItem<int>(
                               value: ex.id,
                               child: Text(ex.exerciseName),
                             );
                           }).toList(),
-                          
                           onChanged: (int? newId) {
                             if (newId != null) {
                               final selected = filteredExercises.firstWhere((e) => e.id == newId);
@@ -397,6 +379,9 @@ void _showAddExerciseDialog() {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange),
                   onPressed: () {
+                    // Si por alguna razón no hay ejercicio seleccionado, salimos
+                    if (selectedExerciseId == -1) return;
+
                     this.setState(() {
                       _addedExercises.add(ExerciseDraft(
                         exerciseId: selectedExerciseId,
@@ -449,12 +434,18 @@ void _showAddExerciseDialog() {
     );
   }
 
-
 // MODAL PARA CREAR UN EJERCICIO NUEVO EN LA BD
-  Future<void> _showCreateExerciseDialog() async {
+  Future<String?> _showCreateExerciseDialog() async {
     final nameController = TextEditingController();
-    String selectedGroup = "Pecho"; // Valor por defecto
-    final groups = ["Pecho", "Espalda", "Piernas", "Hombros", "Brazos", "Abdominales", "Cardio", "Otros"];
+    
+    // Lista completa de grupos
+    final groups = ["Pecho", "Espalda", "Piernas", "Hombros", "Brazos", "Abdominales", "Glúteos", "Cardio", "Calistenia", "Full Body", "Otros"];
+    groups.sort();
+    
+    String selectedGroup = "Pecho"; 
+
+    // Retornaremos el grupo del nuevo ejercicio para auto-seleccionarlo luego
+    String? createdGroup; 
 
     await showDialog(
       context: context,
@@ -501,21 +492,32 @@ void _showAddExerciseDialog() {
                   // 1. Guardar en BD
                   final newId = await widget.routineService.createExercise(nameController.text, selectedGroup);
                   
-                  // 2. Crear el objeto localmente para no tener que recargar toda la BD
+                  // 2. Actualizar lista local
                   final newExercise = ExerciseData(
                     id: newId, 
                     exerciseName: nameController.text, 
                     muscularGroup: selectedGroup
                   );
 
-                  // 3. Actualizar la lista global de la página
                   setState(() {
                     _availableExercises.add(newExercise);
-                    // Ordenamos para que salga bonito
                     _availableExercises.sort((a, b) => a.exerciseName.compareTo(b.exerciseName)); 
                   });
 
-                  if (mounted) Navigator.pop(context); // Cerramos el dialog
+                  createdGroup = selectedGroup; // Guardamos el grupo para devolverlo
+
+                  if (mounted) {
+                    Navigator.pop(context); // Cerrar popup
+                    
+                    // MENSAJE DE ÉXITO ✅
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Ejercicio '${nameController.text}' añadido correctamente"),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
                 }
               },
               child: const Text("Guardar"),
@@ -524,26 +526,58 @@ void _showAddExerciseDialog() {
         );
       },
     );
+    
+    return createdGroup; // Devolvemos el grupo creado (o null si canceló)
   }
-
   // LA LÓGICA DE GUARDADO
 void _saveRoutine() async {
-    // 1. Validaciones
+    // A) Validar Nombre de rutina
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("¡Falta el nombre de la rutina!")),
       );
       return;
     }
+
+    // B) Validar Días
+    if (_selectedDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Selecciona al menos un día para entrenar.",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    // Validar Ejercicios
     if (_addedExercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Agrega al menos un ejercicio.")),
+        const SnackBar(
+          content: Text("Agrega al menos un ejercicio.",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Guardando rutina...")),
+      const SnackBar(content: Text("Guardando rutina...", 
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
+      ),)),
     );
 
     try {
@@ -551,14 +585,10 @@ void _saveRoutine() async {
       await widget.routineService.createRoutineWithExercises(
         userId: 1, 
         routineName: _nameController.text, // Tu servicio pide 'routineName'
-        
         // CONVERSIÓN 1: Tu servicio pide String, la UI tiene List. Usamos join.
-        // Convertimos ["Lun", "Mar"] -> "Lun,Mar"
-        dayWeek: _selectedDays.join(','), 
-        
+        dayWeek: _selectedDays.join(','),  // Convertimos ["Lun", "Mar"] -> "Lun,Mar"
         // CONVERSIÓN 2: Tu servicio pide fecha, la generamos aquí
         creationDate: DateTime.now(), 
-        
         exercises: _addedExercises,
       );
 
@@ -567,8 +597,14 @@ void _saveRoutine() async {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
            const SnackBar(
-             content: Text("¡Rutina creada con éxito! 💪"),
-             backgroundColor: Colors.green,
+             content: Text("¡Rutina creada con éxito! 💪",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            backgroundColor: Colors.green,
            ),
         );
       }

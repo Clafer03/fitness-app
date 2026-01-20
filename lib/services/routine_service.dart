@@ -1,5 +1,6 @@
 import '../core/database/app_database.dart';
-import '../core/repositories/routine_repository.dart';
+// Al importar el repositorio, automáticamente importas la clase RoutineExerciseView que vive dentro de él
+import '../core/repositories/routine_repository.dart'; 
 import '../ui/create_routine_page.dart';
 
 class RoutineService {
@@ -29,7 +30,7 @@ class RoutineService {
       for (final exercise in exercises) {
         await _repository.crearDetalleRutina(
           routineId: routineId,
-          exerciseId: exercise.exerciseId, // IMPORTANTE → ID, no nombre
+          exerciseId: exercise.exerciseId,
           series: exercise.sets,
           repetitions: exercise.reps,
           initialWeight: exercise.weight,
@@ -48,5 +49,19 @@ class RoutineService {
 
   Future<int> createExercise(String name, String group) {
     return _repository.insertExercise(name: name, group: group);
+  }
+
+  // ============ BORRADO DE RUTINAS ============
+  Future<void> deleteRoutine(int routineId) async {
+    await db.transaction(() async {
+      await _repository.deleteRoutineDetails(routineId);
+      await _repository.deleteRoutine(routineId);
+    });
+  }
+
+  // Método para obtener el plan de entrenamiento
+  // Ahora Dart sabe que esta RoutineExerciseView viene del import de 'routine_repository.dart'
+  Future<List<RoutineExerciseView>> getRoutineDetails(int routineId) {
+    return _repository.getExercisesByRoutineId(routineId);
   }
 }
