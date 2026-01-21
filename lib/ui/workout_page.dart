@@ -248,7 +248,29 @@ class _WorkoutPageState extends State<WorkoutPage> {
                         
                         // Icono derecho (solo visible en modo normal)
                         if (!_isSelectionMode)
-                          const Icon(Icons.chevron_right, color: AppColors.orange),
+                          Row(
+                            mainAxisSize: MainAxisSize.min, // Para que no ocupen todo el espacio
+                            children: [
+                              // BOTÓN EDITAR ✏️
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.grey, size: 20),
+                                onPressed: () {
+                                  // NAVEGAMOS A CREAR RUTINA PERO PASANDO LA RUTINA ACTUAL
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CreateRoutinePage(
+                                        routineService: widget.routineService,
+                                        routineToEdit: rutina, // <--- LA MAGIA: Pasamos la rutina para editar
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              // Flechita para entrenar
+                              const Icon(Icons.chevron_right, color: AppColors.orange),
+                            ],
+                          ),
                       ],
                     ),
                   ),

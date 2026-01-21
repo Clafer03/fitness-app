@@ -1,4 +1,5 @@
 import '../core/database/app_database.dart';
+import 'package:drift/drift.dart';
 // Al importar el repositorio, automáticamente importas la clase RoutineExerciseView que vive dentro de él
 import '../core/repositories/routine_repository.dart'; 
 import '../ui/create_routine_page.dart';
@@ -56,6 +57,39 @@ class RoutineService {
     await db.transaction(() async {
       await _repository.deleteRoutineDetails(routineId);
       await _repository.deleteRoutine(routineId);
+    });
+  }
+
+  // ACTUALIZAR RUTINA EXISTENTE
+  Future<void> updateRoutine({
+    required int routineId,
+    required String routineName,
+    required String dayWeek,
+    required List<ExerciseDraft> newExercises,
+  }) async {
+    await db.transaction(() async {
+      // 1. Actualizar la cabecera (Nombre y Días)
+      await (db.update(db.routine)..where((t) => t.id.equals(routineId))).write(
+        RoutineCompanion(
+          routineName: Value(routineName),
+          dayWeek: Value(dayWeek),
+          // La fecha de creación no la tocamos
+        ),
+      );
+
+      // 2. BORRAR los ejercicios viejos vinculados a esta rutina
+      await (db.delete(db.routineDetail)..where((t) => t.routineId.equals(routineId))).go();
+
+      // 3. INSERTAR los ejercicios nuevos (tal cual están en la lista ahora)
+      for (final exercise in newExercises) {
+        await _repository.crearDetalleRutina(
+          routineId: routineId,
+          exerciseId: exercise.exerciseId,
+          series: exercise.sets,
+          repetitions: exercise.reps,
+          initialWeight: exercise.weight,
+        );
+      }
     });
   }
 
