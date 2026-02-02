@@ -7,17 +7,20 @@ import 'history_page.dart'; // <--- IMPORTA LA NUEVA PÁGINA AQUÍ
 import '../services/dashboard_service.dart';
 import '../services/training_service.dart';
 import '../services/routine_service.dart';
+import '../services/progress_service.dart';
 
 class MainScreen extends StatefulWidget {
   final DashboardService dashboardService;
   final TrainingService trainingService;
   final RoutineService routineService;
+  final ProgressService progressService;
 
   const MainScreen({
     super.key, 
     required this.dashboardService, 
     required this.trainingService, 
-    required this.routineService
+    required this.routineService,
+    required this.progressService
   });
 
   @override
@@ -32,7 +35,7 @@ class _MainScreenState extends State<MainScreen> {
     // Definimos la lista de páginas en el mismo orden que los botones
     final List<Widget> pages = [
       // 0. PROGRESO (Dashboard)
-      HomePage(dashboardService: widget.dashboardService), 
+      HomePage(dashboardService: widget.dashboardService, progressService: widget.progressService,), 
       
       // 1. ENTRENAR (WorkoutPage)
       WorkoutPage(

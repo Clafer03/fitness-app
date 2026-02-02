@@ -133,7 +133,7 @@ class TrainingRepository {
         final ex = dRow.readTable(db.exercise);
         
         // Calculamos volumen de esta serie
-        final vol = det.usedWeight * det.repetitions * det.series; // Asumiendo que 'series' es 1 por registro en tu logica nueva, o ajustar
+        final vol = det.usedWeight * det.repetitions; // * det.series; // Asumiendo que 'series' es 1 por registro en tu logica nueva, o ajustar
         totalVol += vol;
 
         if (!grouped.containsKey(ex.exerciseName)) {

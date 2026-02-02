@@ -4,6 +4,7 @@ import 'core/database/app_database.dart';
 import 'services/training_service.dart';
 import 'services/routine_service.dart';
 import 'services/dashboard_service.dart';
+import 'services/progress_service.dart';
 import 'services/seed_service.dart';
 import 'theme/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -19,6 +20,7 @@ void main() async {
   final dashboardService = DashboardService(database);
   final seedService = SeedService(database);
   final routineService = RoutineService(database);
+  final progressService = ProgressService(database);
 
   await seedService.seed();
 
@@ -27,6 +29,7 @@ void main() async {
     trainingService:trainingService,
     dashboardService:dashboardService,
     routineService: routineService,
+    progressService: progressService
     )
   );
 }
@@ -36,13 +39,15 @@ class MyApp extends StatelessWidget {
   final TrainingService trainingService;
   final DashboardService dashboardService;
   final RoutineService routineService;
+  final ProgressService progressService;
 
   const MyApp({
     super.key,
     required this.database,
     required this.trainingService,
     required this.dashboardService,
-    required this.routineService
+    required this.routineService,
+    required this.progressService
   });
 
   @override
@@ -61,7 +66,7 @@ class MyApp extends StatelessWidget {
         Locale('es', 'ES'), // Español <--- ¡IMPORTANTE!
       ],
       // ----------------------------------------
-      home: MainScreen(dashboardService: dashboardService, trainingService: trainingService, routineService: routineService )//HomePage(dashboardService: dashboardService)//DebugTablePage(db: database),
+      home: MainScreen(dashboardService: dashboardService, trainingService: trainingService, routineService: routineService, progressService: progressService )//HomePage(dashboardService: dashboardService)//DebugTablePage(db: database),
     );
   }
 }

@@ -98,10 +98,25 @@ class _HistoryPageState extends State<HistoryPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF111827), // Fondo oscuro base
       appBar: AppBar(
-        title: const Text("Historial"),
         backgroundColor: const Color(0xFF111827),
         elevation: 0,
+        centerTitle: false,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, // Alineación izquierda
+          children: [
+            const Text(
+              "Historial", 
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+            ),
+            const SizedBox(height: 2), // Espacio pequeño
+            const Text(
+              "Revisa tus entrenamientos anteriores", 
+              style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.normal)
+            ),
+          ],
+        ),        
       ),
+      
       body: Column(
         children: [
           // 1. SECCIÓN DE FILTROS
@@ -250,7 +265,7 @@ class _HistoryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text("${ex.bestWeight} kg", style: const TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold, fontSize: 14)),
-                      Text("Vol: ${ex.volume.toStringAsFixed(0)}", style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                      Text("Vol: ${ex.volume.toStringAsFixed(0)} kg", style: const TextStyle(color: Colors.grey, fontSize: 10)),
                     ],
                   ),
                 ],

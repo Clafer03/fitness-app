@@ -65,13 +65,18 @@ class _ActiveWorkoutPageState extends State<ActiveWorkoutPage> {
 
     // Recorremos todos los ejercicios
     _controllers.forEach((exerciseId, setControllers) {
-      for (var setCtrl in setControllers) {
-        // Solo guardamos si el usuario marcó el checkbox
+      for (int i = 0; i < setControllers.length; i++) { // Usamos un for con índice
+        final setCtrl = setControllers[i];
+
         if (setCtrl.isCompleted) {
           logsToSave.add(TrainingDetailCompanion.insert(
-            trainingId: 0, // Se asignará automáticamente en el servicio
+            trainingId: 0, 
             exerciseId: exerciseId,
-            series: 0, // Podrías poner el índice + 1 si quieres guardar el nro de serie
+            
+            // ANTES: series: 0,
+            // AHORA: Guardamos el número real (1, 2, 3...)
+            series: i + 1, 
+            
             repetitions: int.tryParse(setCtrl.repsCtrl.text) ?? 0,
             usedWeight: double.tryParse(setCtrl.weightCtrl.text) ?? 0.0,
             completed: true,

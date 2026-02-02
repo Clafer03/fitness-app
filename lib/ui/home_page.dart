@@ -1,137 +1,53 @@
-// import 'package:flutter/material.dart';
-// import '../services/training_service.dart';
-
-// class HomePage extends StatefulWidget {
-//   final TrainingService trainingService;
-
-//   const HomePage({super.key, required this.trainingService});
-
-//   @override
-//   State<HomePage> createState() => _HomePageState();
-// }
-
-// class _HomePageState extends State<HomePage> {
-//   double? volume;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: const Text('Fitness Tracker')),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           children: [
-//             ElevatedButton(
-//               onPressed: () async {
-//                 final result =
-//                     await widget.trainingService.getTrainVolume(1);
-
-//                 setState(() {
-//                   volume = result;
-//                 });
-//               },
-//               child: const Text('Calcular volumen entrenamiento'),
-//             ),
-//             const SizedBox(height: 20),
-//             if (volume != null)
-//               Text(
-//                 'Volumen total: ${volume!.toStringAsFixed(2)} kg',
-//                 style: const TextStyle(fontSize: 18),
-//               ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// import 'package:flutter/material.dart';
-// import '../services/dashboard_service.dart';
-
-// class HomePage extends StatelessWidget {
-//   final DashboardService dashboardService;
-
-//   const HomePage({super.key, required this.dashboardService});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: const Text('Dashboard')),
-//       body: FutureBuilder<DashboardData>(
-//         future: dashboardService.getDashboardData(1),
-//         builder: (context, snapshot) {
-//           if (!snapshot.hasData) {
-//             return const Center(child: CircularProgressIndicator());
-//           }
-
-//           final data = snapshot.data!;
-
-//           return Padding(
-//             padding: const EdgeInsets.all(16),
-//             child: Column(
-//               children: [
-//                 _metric('🔥 Calorías hoy', '${data.caloriesToday} kcal'),
-//                 _metric('⏱ Tiempo activo', '${data.durationToday} min'),
-//                 _metric('📦 Volumen total', data.volumeToday.toStringAsFixed(1)),
-//                 _metric('📆 Racha', '${data.streak} días'),
-//               ],
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   Widget _metric(String title, String value) {
-//     return Card(
-//       child: ListTile(
-//         title: Text(title),
-//         trailing: Text(
-//           value,
-//           style: const TextStyle(fontWeight: FontWeight.bold),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
 import 'package:flutter/material.dart';
 import '../services/dashboard_service.dart';
-import '../widgets/metric_card.dart';
+import '../services/progress_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/metric_card.dart';
+import '../widgets/improvement_card.dart'; // Tu nuevo widget verde
+import 'detailed_progress_page.dart';     // La página de gráficos
+import '../core/repositories/dashboard_repository.dart'; // Importante: Para reconocer "ImprovementData"
 
 class HomePage extends StatelessWidget {
   final DashboardService dashboardService;
+  final ProgressService progressService;
 
-  const HomePage({super.key, required this.dashboardService});
+  const HomePage({
+      super.key, 
+      required this.dashboardService,
+      required this.progressService
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // No definimos backgroundColor porque ya viene del AppTheme
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: const Text('Resumen Semanal'), 
+        backgroundColor: const Color(0xFF111827),
+        elevation: 0,
+      ),
+      backgroundColor: const Color(0xFF111827),
+
       body: SafeArea(
-        // 1. Recuperamos el FutureBuilder para tener "data"
         child: FutureBuilder<DashboardData>(
-          future: dashboardService.getDashboardData(1), // ID de usuario de prueba
+          // Cargamos los datos del usuario 1
+          future: dashboardService.getDashboardData(1), 
           builder: (context, snapshot) {
             
-            // Estado de carga
+            // 1. ESTADO DE CARGA
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Manejo de errores (importante para producción)
+            // 2. ESTADO DE ERROR
             if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+              return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
             }
 
+            // 3. SIN DATOS
             if (!snapshot.hasData) {
-              return const Center(child: Text('No hay datos disponibles'));
+              return const Center(child: Text('No hay datos disponibles', style: TextStyle(color: Colors.white)));
             }
 
-            // Aquí "nace" la variable data
             final data = snapshot.data!;
 
             return SingleChildScrollView(
@@ -139,48 +55,103 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- SALUDO Y TÍTULO ---
                   Text(
-                    'Hola, ${data.userName}! 💪',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    'Hola, ${data.userName}! 👋',
+                    style: const TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Tu actividad de esta semana",
+                    style: TextStyle(
+                      color: Colors.white, 
+                      fontSize: 20, 
+                      fontWeight: FontWeight.bold
+                    ),
                   ),
                   const SizedBox(height: 24),
                   
+                  // --- SECCIÓN 1: GRID DE MÉTRICAS (KPIs) ---
                   GridView.count(
                     crossAxisCount: 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                     shrinkWrap: true,
-                    // Importante: Physics para que no choque con el SingleChildScrollView
                     physics: const NeverScrollableScrollPhysics(), 
                     childAspectRatio: 1.4,
-                    // 2. Quitamos el "const" aquí porque los valores cambian
                     children: [ 
                       MetricCard(
-                        title: 'Calorías Hoy',
-                        value: '${data.caloriesToday}',
-                        icon: Icons.local_fire_department_rounded,
-                        color: AppColors.orange,
-                      ),
-                      MetricCard(
-                        title: 'Tiempo Activo',
-                        value: '${data.durationToday}m',
-                        icon: Icons.access_time_filled_rounded,
+                        title: 'Entrenos',
+                        value: '${data.workoutsCount}',
+                        unit: 'Sesiones',
+                        icon: Icons.fitness_center,
                         color: AppColors.blue,
                       ),
                       MetricCard(
-                        title: 'Racha',
-                        value: '${data.streak} días', // Corregido de "m" a "días"
-                        icon: Icons.calendar_today_rounded,
+                        title: 'Tiempo Activo',
+                        value: '${data.activeMinutes}',
+                        unit: 'Minutos',
+                        icon: Icons.access_time_filled_rounded,
                         color: AppColors.green,
                       ),
                       MetricCard(
                         title: 'Volumen Total',
-                        value: formattedVolume(data.volumeToday),
-                        icon: Icons.trending_up_rounded,
+                        value: formattedVolume(data.weeklyVolume),
+                        unit: 'Kg totales',
+                        icon: Icons.line_weight, 
                         color: AppColors.purple,
+                      ),
+                      MetricCard(
+                        title: 'Gasto',
+                        value: '${data.totalCalories}',
+                        unit: 'Kcal',
+                        icon: Icons.local_fire_department_rounded,
+                        color: AppColors.orange,
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 35),
+
+                  // --- SECCIÓN 2: MEJORAS DESTACADAS ---
+                  // Solo pintamos esta sección si la lista NO está vacía
+                  if (data.improvements.isNotEmpty) ...[
+                     const Text(
+                      "Mejoras Destacadas 🔥",
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Generamos una tarjeta por cada mejora
+                    ...data.improvements.map((improvement) => ImprovementCard(data: improvement)),
+                  ],
+
+                  const SizedBox(height: 30),
+
+                  // --- SECCIÓN 3: BOTÓN A DETALLES ---
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: AppColors.orange),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            // Pasamos el servicio de progreso a la nueva página
+                            builder: (context) => DetailedProgressPage(progressService: progressService),
+                          ),
+                        );
+                      },
+                      child: const Text("Ver Análisis Detallado 📈", style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  
+                  // Espacio extra al final para que no quede pegado en pantallas pequeñas
+                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -190,11 +161,14 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // Esta función está perfecta aquí para lógica de la UI específica de esta página
+  // Helper para formatear volúmenes grandes (12000 -> 12K)
   String formattedVolume(double volume) {
+    if (volume >= 1000000) {
+        return '${(volume / 1000000).toStringAsFixed(1)}M';
+    }
     if (volume >= 1000) {
       return '${(volume / 1000).toStringAsFixed(1)}K';
     }
-    return volume.toStringAsFixed(1);
+    return volume.toStringAsFixed(0);
   }
 }

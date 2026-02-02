@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 class MetricCard extends StatelessWidget {
   final String title;
   final String value;
+  final String unit;
   final IconData icon;
   final Color color; // El color del "tema" de la tarjeta (naranja, azul, etc.)
 
@@ -11,6 +12,7 @@ class MetricCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.value,
+    required this.unit,
     required this.icon,
     required this.color,
   });
@@ -55,6 +57,15 @@ class MetricCard extends StatelessWidget {
                   style: TextStyle(
                     color: color, 
                     fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  unit,
+                  style: TextStyle(
+                    color: color, 
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
